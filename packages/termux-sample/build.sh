@@ -15,6 +15,9 @@ TERMUX_PKG_VERSION="1.0.0"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
 
+# C branch: proot necesita libtalloc
+TERMUX_PKG_DEPENDS="libtalloc"
+
 # Detectar lenguaje y cargar script optimizado
 if [ -f "$TERMUX_PKGS__BUILD__REPO_ROOT_DIR/project/Cargo.toml" ]; then
     echo "═══════════════════════════════════════════════"
