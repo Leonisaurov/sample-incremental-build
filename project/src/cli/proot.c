@@ -643,3 +643,5 @@ const Cli *get_proot_cli(TALLOC_CTX *context UNUSED)
 	global_tool_name = proot_cli.name;
 	return &proot_cli;
 }
+
+/* warm cache test */
