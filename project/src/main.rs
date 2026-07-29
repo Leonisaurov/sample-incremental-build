@@ -291,7 +291,7 @@ fn open_editor(win: &mut Window, file: PathBuf) {
 
     // Opening tmp_dir + path
     if win.scheme.editor.is_empty() {
-        show_err_dialog(win, "Content-7z can not assumed any editor.\nDefine one in the config file:\n~/.config/content-7z.toml", false);
+        show_err_dialog(win, "Content-7z (incremental) can not assumed any editor.\nDefine one in the config file:\n~/.config/content-7z.toml", false);
         return;
     }
 
