@@ -30,7 +30,7 @@
 #include "tracee/tracee.h"
 
 int global_verbose_level;
-const char *global_tool_name;
+const char *global_tool_name; /* incremental build test */
 
 /**
  * Print @message to the standard error stream according to its
