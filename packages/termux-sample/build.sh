@@ -6,6 +6,7 @@ TERMUX_PKG_MAINTAINER="@termux-user"
 TERMUX_PKG_VERSION="1.0.0"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
+TERMUX_PKG_DEPENDS="libtalloc"
 
 termux_step_get_source() {
     mkdir -p "$TERMUX_PKG_SRCDIR"
