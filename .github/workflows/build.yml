@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/termux/termux-packages:latest
+      image: ghcr.io/termux/package-builder
 
     steps:
       - name: Checkout repository
