@@ -113,7 +113,7 @@ termux_step_get_source() {
     #   -a  : modo archivo (preserva permisos, timestamps, etc.)
     #   --delete : elimina archivos en destino que ya no existen en origen
     #             (útil cuando se renombran o eliminan fuentes)
-    rsync -a --delete "$TERMUX_PKG_BUILDER_DIR/project/" "$TERMUX_PKG_SRCDIR/"
+    rsync -a --delete "$TERMUX_PKGS__BUILD__REPO_ROOT_DIR/project/" "$TERMUX_PKG_SRCDIR/"
 
     echo "=> Fuente local copiada: $(find "$TERMUX_PKG_SRCDIR" -type f | wc -l) archivos"
 }
