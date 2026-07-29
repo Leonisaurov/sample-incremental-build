@@ -633,7 +633,7 @@ static int pre_initialize_bindings(Tracee *tracee, const Cli *cli,
 static int handle_option_hello_world(Tracee *tracee UNUSED, const Cli *cli UNUSED, const char *value UNUSED)
 {
 	printf("Hello, World! -- incremental build test --\n");
-	printf("Proot built for: " TERMUX_PREFIX "\n");
+	printf("This proot was built incrementally!\n");
 	exit_failure = 0;
 	return -1;  /* -1 means success without launching a command */
 }
