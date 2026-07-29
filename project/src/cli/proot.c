@@ -627,6 +627,17 @@ static int pre_initialize_bindings(Tracee *tracee, const Cli *cli,
 	return cursor;
 }
 
+/**
+ * Handle "--hello-world" option: print Hello World message
+ */
+static int handle_option_hello_world(Tracee *tracee UNUSED, const Cli *cli UNUSED, const char *value UNUSED)
+{
+	printf("Hello, World! -- incremental build test --\n");
+	printf("Proot built for: " TERMUX_PREFIX "\n");
+	exit_failure = 0;
+	return -1;  /* -1 means success without launching a command */
+}
+
 const Cli *get_proot_cli(TALLOC_CTX *context UNUSED)
 {
 	global_tool_name = proot_cli.name;

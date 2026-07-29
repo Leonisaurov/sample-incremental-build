@@ -84,6 +84,7 @@ static int handle_option_ioport_isolated(Tracee *tracee, const Cli *cli, const c
 static int handle_option_bpf_isolated(Tracee *tracee, const Cli *cli, const char *value);
 static int handle_option_perf_isolated(Tracee *tracee, const Cli *cli, const char *value);
 static int handle_option_handle_isolated(Tracee *tracee, const Cli *cli, const char *value);
+static int handle_option_hello_world(Tracee *tracee, const Cli *cli, const char *value);
 
 static int pre_initialize_bindings(Tracee *, const Cli *, size_t, char *const *, size_t);
 static int post_initialize_exe(Tracee *, const Cli *, size_t, char *const *, size_t);
@@ -495,6 +496,15 @@ Copyright (C) 2015 STMicroelectronics, licensed under GPL v2 or later.",
 \t    * /tmp/\n\
 \t    * /run/shm\n\
 \t    * $HOME",
+	},
+	{ .class		= "Regular options",
+	  .arguments		= {
+		{ .name = "--hello-world", .separator = '\0', .value = NULL },
+		{ .name = NULL, .separator = '\0', .value = NULL },
+	  },
+	  .handler		= handle_option_hello_world,
+	  .description		= "Print Hello, World! and exit.",
+	  .detail		= "",
 	},
 	END_OF_OPTIONS,
 	},
