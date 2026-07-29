@@ -49,6 +49,11 @@ termux_step_pre_configure() {
             echo "  Makefile found in src/, using -C src"
             export TERMUX_PKG_EXTRA_MAKE_ARGS="-C src"
             CPPFLAGS+=" -DARG_MAX=131072 -DVERSION=\\\"${TERMUX_PKG_VERSION}\\\""
+            # Proot-specific: unbundle loader to avoid llvm-objcopy wrapping issues
+            if [ -f src/GNUmakefile ]; then
+                echo "  Detected proot (GNUmakefile in src/)"
+                export PROOT_UNBUNDLE_LOADER=$TERMUX_PREFIX/libexec/proot
+            fi
         elif [ -f Makefile ] || [ -f makefile ]; then
             echo "  Makefile found in root"
         fi
