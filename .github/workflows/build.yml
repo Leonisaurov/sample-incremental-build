@@ -7,6 +7,7 @@ on:
       - 'project/**'
       - 'packages/termux-sample/build.sh'
       - '.github/workflows/build.yml'
+      - 'helpers/**'
     branches:
       - '**'
   workflow_dispatch:
