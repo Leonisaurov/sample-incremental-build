@@ -97,3 +97,5 @@ void note(const Tracee *tracee, Severity severity, Origin origin, const char *me
 
 /* incremental build test - C */
 
+
+/* C incremental build works */
