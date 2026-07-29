@@ -2,10 +2,21 @@
 # ═══════════════════════════════════════════════════════════════
 # helpers/build-c.sh — Build recipe for C projects
 # ═══════════════════════════════════════════════════════════════
-# Estrategia incremental:
+# Part of termux-incremental-build-template
+#
+# USE:   Auto-cargado por packages/<pkg>/build.sh cuando
+#        NO detecta Cargo.toml ni build.zig
+#
+# DEPS:  ccache (instalado via apt en container si disponible)
+#
+# CACHE: ccache cacheado por hash de headers/Makefile
+#
+# ESTRATEGIA INCREMENTAL:
 #   - ccache (cachea objetos compilados por contenido)
+#   - rsync --checksum (compara por contenido, no timestamp)
 #   - rsync --exclude='*.o' (preserva objetos entre builds)
 #   - make natural (solo recompila .c cambiados si .o persisten)
+#   - NOTA: C ya es rápido (~1.5s para 75 archivos)
 # ═══════════════════════════════════════════════════════════════
 
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
@@ -19,7 +30,7 @@ termux_step_get_source() {
 }
 
 termux_step_pre_configure() {
-    # ─── ccache ───
+    # ─── ccache setup ───
     if ! command -v ccache &>/dev/null; then
         apt-get update -qq 2>/dev/null || true
         apt-get install -y -qq ccache 2>/dev/null || true

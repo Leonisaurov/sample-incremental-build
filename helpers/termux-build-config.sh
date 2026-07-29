@@ -2,12 +2,15 @@
 # ═══════════════════════════════════════════════════════════════
 # helpers/termux-build-config.sh — Carga configuración del proyecto
 # ═══════════════════════════════════════════════════════════════
-# Lee project/.termux-build-config y exporta las variables.
-# Este archivo es "sourceado" por build.sh
+# Part of termux-incremental-build-template
 #
-# Formato de project/.termux-build-config:
+# USE:   Sourceado por packages/<pkg>/build.sh al inicio
+#
+# CONFIG: Lee project/.termux-build-config y exporta variables
+#
+# FORMATO DE project/.termux-build-config:
 #   PKG_DEPENDS="libtalloc libandroid-shmem"
-#   BUILD_SYSTEM="make"  # make, autotools, cmake, meson
+#   BUILD_SYSTEM="make"           # make, autotools, cmake, meson
 #   EXTRA_MAKE_ARGS="-C src"
 #   CPPFLAGS_EXTRA="-DARG_MAX=131072"
 #   EXTRA_ENV="PROOT_UNBUNDLE_LOADER=\$PREFIX/libexec/proot"
@@ -23,7 +26,6 @@ fi
 echo "  Loading config: $CONFIG_FILE"
 source "$CONFIG_FILE"
 
-# Aplicar configuraciones
 if [ -n "${PKG_DEPENDS:-}" ]; then
     TERMUX_PKG_DEPENDS="$PKG_DEPENDS"
     echo "  Dependencies: $TERMUX_PKG_DEPENDS"
