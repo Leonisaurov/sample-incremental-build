@@ -37,7 +37,7 @@ termux_step_pre_configure() {
             echo "  ccache found"
         else
             echo "  Installing ccache..."
-            sudo apt-get update -qq 2>/dev/null
+            sudo apt-get update -qq 2>/dev/null || echo "  warning: apt-get update failed, trying install anyway"
             sudo apt-get install -y -qq ccache 2>/dev/null && echo "  ccache installed" || echo "  ccache install failed"
         fi
 
