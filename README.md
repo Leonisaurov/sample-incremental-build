@@ -1,166 +1,198 @@
 # Termux Sample Project
 
-![Termux](https://img.shields.io/badge/Termux-000000?style=flat-square&logo=terminal&label=platform)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions)
+![Termux](https://img.shields.io/badge/Termux-000000?style=flat&logo=terminal)
+![MIT](https://img.shields.io/badge/license-MIT-blue)
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF)
 
-Plantilla base para compilar programas para **Termux** usando el build system oficial [`termux-packages`](https://github.com/termux/termux-packages). Este repositorio proporciona la estructura de directorios, scripts y configuración de CI necesarios para empezar a empaquetar software para Termux de forma rápida y estandarizada.
+## Descripción
 
-No compila nada por sí mismo — es únicamente un **scaffold** o **template** que puedes copiar y adaptar para tu propio proyecto.
+Template para compilar programas para Termux con build incremental y CI
+automático. El código fuente se edita en el directorio `project/` y al hacer
+commit se dispara el build en GitHub Actions. La caché incremental acelera
+builds subsecuentes al reutilizar el estado de compilación anterior.
 
----
+Este repositorio no es un scaffold genérico — es un flujo de trabajo real
+donde el código trackeado vive junto con la configuración de empaquetado.
 
-## Estructura del proyecto
+## Flujo de trabajo
 
 ```
-termux-sample-project/
-├── build.sh                          # Script de build (estilo termux-packages)
-├── CHANGELOG.md                      # Registro de cambios
-├── LICENSE                           # Licencia MIT
-├── VERSION                           # Versión actual del paquete
-├── .gitignore                        # Exclusiones Git
-├── .github/
-│   └── workflows/
-│       └── build.yml                 # CI con GitHub Actions
-├── patches/
-│   └── 01-fix-example.patch          # Parche de ejemplo
-├── scripts/
-│   └── setup-env.sh                  # Helper de configuración de entorno
-└── src/
-    ├── hello.c                       # Código fuente de ejemplo (hello world)
-    └── Makefile                      # Makefile de ejemplo
+Tú editas → ./project/src/main.c
+       │
+       ▼
+  git add project/ + git commit + git push
+       │
+       ▼
+  GitHub Actions (workflow/build.yml)
+       │
+       ├── 1. Restaura caché (~/.termux-build/)  ← Incremental!
+       ├── 2. Ejecuta build-package.sh -a aarch64
+       ├── 3. Guarda .deb como artifact
+       └── 4. Actualiza caché para próxima vez  ♻️
 ```
 
----
-
-## Requisitos previos
+## Requisitos
 
 | Recurso | Propósito |
-|---|---|
-| **Docker** | Ejecutar builds locales dentro del entorno controlado de `termux-packages` |
-| **GitHub Actions** | Compilación automática en la nube al hacer push al repositorio |
-| **Fork de `termux/termux-packages`** (opcional) | Necesario solo si deseas contribuir parches o paquetes oficiales upstream |
+|---------|-----------|
+| **GitHub repo** | Alojar el código y ejecutar GitHub Actions |
+| **GitHub Actions habilitado** | Compilación automática en cada push |
+| **Docker** (opcional) | Build local con termux-packages |
 
----
+## Cómo usar
 
-## Cómo usar este template
+### 1. Editar código
 
-### 1. Clonar o copiar como base
-
-```bash
-git clone https://github.com/tu-usuario/termux-sample-project.git mi-paquete
-cd mi-paquete
-```
-
-### 2. Editar `build.sh`
-
-Completa los metadatos del paquete: `TERMUX_PKG_HOMEPAGE`, `TERMUX_PKG_DESCRIPTION`, `TERMUX_PKG_VERSION`, `TERMUX_PKG_SRCURL`, entre otros. Consulta la [sección de variables](#estructura-de-buildsh) más abajo.
-
-### 3. Poner el código fuente en `src/`
-
-Reemplaza los archivos de ejemplo (`hello.c`, `Makefile`) con el código real de tu programa. Ajusta el `Makefile` para que compile correctamente dentro del entorno Termux.
-
-### 4. Configurar el CI
-
-Revisa `.github/workflows/build.yml` y ajusta las arquitecturas objetivo o los triggers si es necesario. Por defecto compila para `aarch64` en cada push a `main`.
-
-### 5. (Opcional) Agregar parches
-
-Si necesitas modificar el código fuente original antes de compilar, coloca los archivos `.patch` en `patches/`. Se aplicarán automáticamente durante el build en orden alfabético.
-
----
-
-## Build local (con Docker)
-
-El método recomendado para compilar localmente es usar la imagen Docker oficial de `termux-packages`:
+Realiza los cambios en los archivos dentro de `project/`. Todo el código
+fuente, el Makefile y los recursos del programa residen ahí.
 
 ```bash
-docker run --rm -it \
-  -v $PWD:/workspace \
-  ghcr.io/termux/termux-packages \
-  bash -c "cd /workspace && ./build-package.sh -a aarch64 termux-sample"
+# Edita los archivos en project/
+vim project/src/main.c
 ```
 
-Explicación de los flags:
+El archivo `project/src/main.c` es un programa de ejemplo (`termux-sysinfo`).
+Puedes modificarlo o reemplazarlo por completo.
 
-| Flag | Significado |
-|---|---|
-| `--rm` | Elimina el contenedor tras finalizar |
-| `-it` | Modo interactivo para ver la salida en terminal |
-| `-v $PWD:/workspace` | Monta el directorio actual dentro del contenedor |
-| `-a aarch64` | Arquitectura destino (`aarch64`, `arm`, `i686`, `x86_64`) |
-| `termux-sample` | Nombre del paquete (debe coincidir con `TERMUX_PKG_NAME` en `build.sh`) |
+### 2. Compilar localmente (prueba rápida)
 
-El binario compilado se generará dentro del contenedor en `/workspace/debs/` con extensión `.deb`.
-
----
-
-## Build con GitHub Actions
-
-El flujo de trabajo incluido en `.github/workflows/build.yml` se activa automáticamente en cada push a la rama `main` (o `master`). También puedes ejecutarlo manualmente desde la pestaña **Actions** de tu repositorio en GitHub.
-
-**¿Qué hace?**
-
-1. Clona el repositorio y el branch `packages` de `termux/termux-packages`.
-2. Copia los archivos del paquete al árbol de `termux-packages`.
-3. Ejecuta `build-package.sh` para las arquitecturas configuradas.
-4. Sube los paquetes `.deb` generados como artefactos descargables.
-
-Para activarlo, solo haz push al repositorio:
+Para probar que el código compila sin errores antes de hacer commit, usa el
+Makefile local dentro de `project/`:
 
 ```bash
-git add .
-git commit -m "feat: inicializar paquete"
-git push origin main
+cd project && make && ./termux-sysinfo
 ```
 
-El resultado de la compilación estará disponible en **Actions > workflow > Summary > Artifacts**.
+> **Nota**: Esta compilación es nativa y no produce un paquete `.deb`. Sirve
+> únicamente para validación rápida en Termux o Linux.
 
----
+### 3. Commit y push (dispara CI automático)
 
-## Estructura de `build.sh`
+Hay dos formas de subir cambios:
 
-Las variables siguientes son las más importantes y deben definirse en el script `build.sh`:
-
-| Variable | Obligatoria | Descripción |
-|---|---|---|
-| `TERMUX_PKG_HOMEPAGE` | Sí | URL del sitio web del proyecto |
-| `TERMUX_PKG_DESCRIPTION` | Sí | Descripción breve del paquete |
-| `TERMUX_PKG_LICENSE` | Sí | Licencia del software (ej. `MIT`, `GPL-2.0`) |
-| `TERMUX_PKG_VERSION` | Sí | Versión del paquete |
-| `TERMUX_PKG_SRCURL` | Sí | URL de descarga del código fuente (tarball, git, etc.) |
-| `TERMUX_PKG_SHA256` | Sí | Checksum SHA-256 del tarball de origen |
-| `TERMUX_PKG_MAINTAINER` | No | Nombre y correo del mantenedor |
-| `TERMUX_PKG_DEPENDS` | No | Dependencias de tiempo de ejecución |
-| `TERMUX_PKG_BUILD_DEPENDS` | No | Dependencias solo de compilación |
-| `TERMUX_PKG_AUTO_UPDATE` | No | Si se debe actualizar automáticamente (`true`/`false`) |
-
-Ejemplo mínimo de `build.sh`:
+#### Opción A: Helper script (recomendada)
 
 ```bash
-TERMUX_PKG_HOMEPAGE=https://example.com
-TERMUX_PKG_DESCRIPTION="A sample Termux package"
-TERMUX_PKG_LICENSE=MIT
-TERMUX_PKG_VERSION=1.0.0
-TERMUX_PKG_SRCURL=https://example.com/source-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=abc123...
-TERMUX_PKG_MAINTAINER="Your Name <your@email.com>"
-TERMUX_PKG_DEPENDS="glibc"
+bash scripts/push-and-build.sh "mi mensaje de commit"
 ```
 
----
+El script:
+- Agrega `project/` al stage de git.
+- Crea un commit con el mensaje dado (prefijado con `update(project):`).
+- Hace push al remote `origin`.
+- Muestra la URL del workflow en GitHub Actions.
+
+Si no hay cambios en `project/`, el script lo notifica y no hace commit.
+
+#### Opción B: Manual
+
+```bash
+git add project/
+git commit -m "update(project): mi cambio"
+git push
+```
+
+El CI se activa automáticamente porque el workflow `build.yml` escucha cambios
+en `project/**`, `build.sh` y `.github/workflows/build.yml`.
+
+## Caché incremental
+
+El workflow de GitHub Actions utiliza `actions/cache@v4` para acelerar builds
+consecutivos. Así funciona:
+
+| Concepto | Detalle |
+|----------|---------|
+| **Cache key** | `termux-build-${{ hashFiles('project/**', 'build.sh') }}` |
+| **Restore keys** | `termux-build-` (busca cualquier caché previa) |
+| **Ruta cacheadas** | `/home/builder/.termux-build` |
+| **Cuándo se guarda** | Al finalizar el job, si la key no existía |
+
+**Efecto práctico**: si cambias un solo archivo fuente, solo se recompila lo
+necesario. El directorio `~/.termux-build` contiene los objetos compilados,
+dependencias descargadas y el estado del builder de termux-packages. Los
+builds siguientes (incluso en ramas diferentes) suelen completarse en una
+fracción del tiempo del primero.
+
+## Estructura de directorios
+
+```
+Sample/
+├── project/                         ← TU CÓDIGO FUENTE (editas aquí)
+│   ├── src/
+│   │   └── main.c                   ← Programa termux-sysinfo en C
+│   ├── Makefile                     ← Build system local
+│   └── README.md                    ← Docs del proyecto
+├── build.sh                         ← Build script termux-packages (override)
+├── .github/
+│   └── workflows/
+│       └── build.yml                ← CI con caché incremental
+├── scripts/
+│   ├── setup-env.sh                 ← Helper de configuración de entorno
+│   └── push-and-build.sh            ← Helper commit+push (ejecutable)
+├── patches/                         ← Parches opcionales (orden alfabético)
+├── .gitignore
+├── .git/
+├── CHANGELOG.md
+├── LICENSE (MIT)
+├── README.md                        ← Este archivo
+└── VERSION
+```
+
+## Archivo `build.sh`
+
+El script `build.sh` sigue el formato de `termux-packages` con una diferencia
+clave: en lugar de descargar un tarball desde `TERMUX_PKG_SRCURL`, la función
+`termux_step_get_source()` está **overrideada** para copiar la fuente local
+desde `./project/` usando `rsync`.
+
+### Variables definidas
+
+| Variable | Valor | Descripción |
+|----------|-------|-------------|
+| `TERMUX_PKG_HOMEPAGE` | `https://github.com/user/termux-sample` | URL del proyecto |
+| `TERMUX_PKG_DESCRIPTION` | `"System info utility for Termux (tracked source)"` | Descripción del paquete |
+| `TERMUX_PKG_LICENSE` | `MIT` | Licencia SPDX |
+| `TERMUX_PKG_MAINTAINER` | `@termux-user` | Mantenedor |
+| `TERMUX_PKG_VERSION` | `1.0.0` | Versión semver |
+| `TERMUX_PKG_SRCURL` | *(vacío)* | Sin tarball externo |
+| `TERMUX_PKG_SHA256` | *(vacío)* | Sin checksum |
+| `TERMUX_PKG_DEPENDS` | `libandroid-support` | Dependencias runtime |
+| `TERMUX_PKG_BUILD_IN_SRC` | `true` | Compila dentro del source dir |
+| `TERMUX_PKG_SKIP_SRC_EXTRACT` | `true` | No extraer tarball |
+
+### Hook override: `termux_step_get_source()`
+
+```
+rsync -a --delete "$TERMUX_PKG_BUILDER_DIR/project/" "$TERMUX_PKG_SRCDIR/"
+```
+
+- `-a`: modo archivo (preserva permisos, timestamps, symlinks).
+- `--delete`: elimina archivos en destino que ya no existen en origen (útil al
+  renombrar o eliminar fuentes).
+- El contenido de `project/` se copia al directorio de compilación cada vez
+  que se ejecuta el build.
 
 ## Limitaciones de Termux
 
-Al trabajar con Termux ten en cuenta lo siguiente:
+Al trabajar con este proyecto ten en cuenta las siguientes particularidades del
+entorno Termux:
 
-- **No compiles directamente en Termux.** El entorno de Termux no está diseñado para compilaciones pesadas. Usa siempre Docker (build local) o GitHub Actions (CI) para compilar. Compilar en el dispositivo puede agotar la batería, sobrecalentar el equipo o llenar el almacenamiento interno.
-- **Usa `$TMPDIR`, no `/tmp`.** En Termux el directorio temporal estándar es `$TMPDIR` (generalmente `/data/data/com.termux/files/usr/tmp`). No asumas la existencia de `/tmp`.
-- **Las rutas no siguen FHS.** Todo el sistema de archivos de Termux reside bajo `/data/data/com.termux/files/`. El prefijo del sistema es `$PREFIX` (usualmente `/data/data/com.termux/files/usr`). No esperes encontrar directorios como `/usr`, `/bin` o `/etc` en ubicaciones estándar.
-- **Arquitecturas soportadas.** Termux se ejecuta sobre `aarch64`, `arm`, `i686` y `x86_64`. Asegúrate de compilar para la arquitectura correcta según el dispositivo destino.
-
----
+- **No compiles directamente en Termux.** El entorno de Termux no está diseñado
+  para compilaciones pesadas. Usa GitHub Actions (CI) o Docker para compilar.
+  Compilar en el dispositivo puede agotar la batería, sobrecalentar el equipo
+  o llenar el almacenamiento interno.
+- **Usa `$TMPDIR`, no `/tmp`.** En Termux el directorio temporal estándar es
+  `$TMPDIR` (generalmente `/data/data/com.termux/files/usr/tmp`). No asumas la
+  existencia de `/tmp`.
+- **Las rutas no siguen FHS.** Todo el sistema de archivos de Termux reside bajo
+  `/data/data/com.termux/files/`. El prefijo del sistema es `$PREFIX`
+  (usualmente `/data/data/com.termux/files/usr`). No esperes encontrar
+  directorios como `/usr`, `/bin` o `/etc` en ubicaciones estándar.
+- **Arquitecturas soportadas.** Termux se ejecuta sobre `aarch64`, `arm`,
+  `i686` y `x86_64`. Asegúrate de compilar para la arquitectura correcta según
+  el dispositivo destino.
 
 ## Licencia
 
-Distribuido bajo la licencia **MIT**. Consulta el archivo [`LICENSE`](./LICENSE) para más detalles.
+Distribuido bajo la licencia **MIT**. Consulta el archivo [`LICENSE`](./LICENSE)
+para más detalles.

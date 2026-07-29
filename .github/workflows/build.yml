@@ -1,114 +1,84 @@
-# =============================================================================
-# .github/workflows/build.yml — GitHub Actions CI for Termux package build
-# =============================================================================
-#
-# This workflow builds the Termux package using termux-pkg-builder inside a
-# Docker container with the official termux-packages image.
-#
-# It runs on every push and pull request to the main branch, and can also
-# be triggered manually via workflow_dispatch.
-#
-# The resulting .deb artifact is uploaded and can be downloaded from the
-# workflow run page.
-# =============================================================================
+name: Build termux-sample
 
-name: Build Termux Package
-
-# --- Triggers ----------------------------------------------------------------
 on:
-    # Run on pushes to the main branch
-    push:
-        branches: [main]
+  push:
+    paths:
+      - 'project/**'
+      - 'build.sh'
+      - '.github/workflows/build.yml'
+    branches:
+      - '**'
+  workflow_dispatch:
+    # Permite trigger manual también
 
-    # Run on pull requests targeting the main branch
-    pull_request:
-        branches: [main]
+permissions:
+  contents: read
 
-    # Allow manual trigger from the GitHub Actions tab
-    workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-# --- Environment variables ---------------------------------------------------
-env:
-    # Target architecture for the build
-    # Options: aarch64, arm, i686, x86_64
-    TERMUX_ARCH: aarch64
-
-    # Package name (must match the directory name under termux-packages)
-    PACKAGE: termux-sample
-
-# --- Jobs --------------------------------------------------------------------
 jobs:
-    build:
-        # Use the official Termux packages Docker image.
-        # This image contains the full build toolchain and termux-pkg-builder.
-        runs-on: ubuntu-latest
-        container:
-            image: ghcr.io/termux/termux-packages:latest
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/termux/termux-packages:latest
 
-        steps:
-            # -----------------------------------------------------------------
-            # Step 1: Check out the repository source code
-            # -----------------------------------------------------------------
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            # -----------------------------------------------------------------
-            # Step 2: Set up the package in the termux-packages build tree
-            #
-            # The build system expects packages under a specific directory
-            # structure. We create a symlink or copy our package into the
-            # termux-packages tree so the builder can find it.
-            # -----------------------------------------------------------------
-            - name: Setup package in build tree
-              run: |
-                PACKAGES_DIR="$HOME/termux-packages/packages"
-                mkdir -p "$PACKAGES_DIR"
-                # Symlink our package directory into the build tree
-                ln -sf "$GITHUB_WORKSPACE" "$PACKAGES_DIR/$PACKAGE"
-                echo "Package linked to: $PACKAGES_DIR/$PACKAGE"
+      - name: Restore build cache (incremental)
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: /home/builder/.termux-build
+          key: termux-build-${{ hashFiles('project/**', 'build.sh') }}
+          restore-keys: |
+            termux-build-
 
-            # -----------------------------------------------------------------
-            # Step 3: Build the package
-            #
-            # The termux-pkg-builder (build-package.sh) compiles the source,
-            # resolves dependencies, and creates a .deb package.
-            #
-            # Flags:
-            #   -a $TERMUX_ARCH  : target architecture
-            #   -I               : install build dependencies automatically
-            #   $PACKAGE         : name of the package (must match directory)
-            # -----------------------------------------------------------------
-            - name: Build package
-              run: |
-                cd "$HOME/termux-packages"
-                ./build-package.sh -a "$TERMUX_ARCH" -I "$PACKAGE"
-              shell: bash
+      - name: Ensure cache directory exists
+        run: mkdir -p /home/builder/.termux-build
 
-            # -----------------------------------------------------------------
-            # Step 4: Upload the .deb artifact
-            #
-            # The built package is located at:
-            #   $HOME/termux-packages/debs/<package>_<version>_<arch>.deb
-            #
-            # We upload it so it can be downloaded from the workflow run page.
-            # -----------------------------------------------------------------
-            - name: Upload .deb artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: termux-sample-${{ env.TERMUX_ARCH }}.deb
-                  path: ${{ env.HOME }}/termux-packages/debs/*.deb
-                  if-no-files-found: error
-                  retention-days: 7
+      - name: Build package for aarch64
+        run: |
+          ./build-package.sh -I -a aarch64 termux-sample
+        env:
+          TERMUX_DOCKER_RUN_EXTRA_ARGS: --volume /home/builder/.termux-build:/home/builder/.termux-build
 
-            # -----------------------------------------------------------------
-            # Step 5: Display build summary
-            # -----------------------------------------------------------------
-            - name: Build summary
-              run: |
-                echo "## ✅ Build complete" >> $GITHUB_STEP_SUMMARY
-                echo "" >> $GITHUB_STEP_SUMMARY
-                echo "- **Package** : $PACKAGE" >> $GITHUB_STEP_SUMMARY
-                echo "- **Arch**    : $TERMUX_ARCH" >> $GITHUB_STEP_SUMMARY
-                echo "- **Image**   : ghcr.io/termux/termux-packages:latest" >> $GITHUB_STEP_SUMMARY
-                echo "" >> $GITHUB_STEP_SUMMARY
-                echo "Artifact uploaded as: \`termux-sample-$TERMUX_ARCH.deb\`" >> $GITHUB_STEP_SUMMARY
+      - name: Collect artifact
+        if: always()
+        run: |
+          mkdir -p ./artifacts
+          cp /home/builder/.termux-build/termux-sample/*.deb ./artifacts/ 2>/dev/null || \
+            find /home/builder/.termux-build -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || \
+            echo "No .deb found - checking build output..."
+          ls -la ./artifacts/ 2>/dev/null || echo "No artifacts directory"
+
+      - name: Upload .deb artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: termux-sample-${{ github.sha }}
+          path: ./artifacts/*.deb
+          retention-days: 7
+
+      - name: Build summary
+        if: always()
+        run: |
+          cat <<'SUMMARY' >> $GITHUB_STEP_SUMMARY
+          # 🏗️ Build termux-sample
+
+          | Detalle | Valor |
+          |---|---|
+          | Commit | ${{ github.sha }} |
+          | Branch | ${{ github.ref_name }} |
+          | Arquitectura | aarch64 |
+          | Cache key | `termux-build-${{ hashFiles('project/**', 'build.sh') }}` |
+          | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
+
+          ## 📁 Archivos en project/ que dispararon el build
+          ```
+          ${{ github.event.before }} → ${{ github.sha }}
+          ```
+          SUMMARY
