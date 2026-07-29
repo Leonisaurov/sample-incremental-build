@@ -39,6 +39,27 @@ jobs:
       - name: Ensure cache directory exists
         run: mkdir -p /home/builder/.termux-build
 
+      - name: Fix NDK path (container HOME mismatch)
+        run: |
+          echo "Home is: $HOME"
+          echo "Looking for NDK at expected paths..."
+          if [ -d /home/builder/lib/android-ndk-r29 ]; then
+            echo "Found NDK at /home/builder/lib/android-ndk-r29"
+            mkdir -p /github/home/lib
+            ln -sf /home/builder/lib/android-ndk-r29 /github/home/lib/android-ndk-r29
+            echo "✅ NDK symlinked to /github/home/lib/android-ndk-r29"
+          elif [ -d /home/builder/lib/android-ndk-r28 ]; then
+            echo "Found NDK at /home/builder/lib/android-ndk-r28"
+            mkdir -p /github/home/lib
+            ln -sf /home/builder/lib/android-ndk-r28 /github/home/lib/android-ndk-r28
+            echo "✅ NDK symlinked to /github/home/lib/android-ndk-r28"
+          else
+            echo "⚠️ NDK not found at expected paths. Searching..."
+            find / -name "android-ndk-*" -maxdepth 5 -type d 2>/dev/null | head -5
+            find /home/builder -name "ndk-*" -maxdepth 3 2>/dev/null | head -5
+            ls -la /home/builder/lib/ 2>/dev/null || echo "No /home/builder/lib/"
+          fi
+
       - name: Build package for aarch64
         run: |
           ./build-package.sh -I -a aarch64 termux-sample
