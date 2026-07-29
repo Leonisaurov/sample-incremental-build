@@ -45,7 +45,7 @@ jobs:
         id: cache-cargo
         uses: actions/cache@v4
         with:
-          path: /home/builder/.termux-build/termux-sample/build/target
+          path: /github/home/.termux-build/termux-sample/cargo-target
           key: cargo-target-${{ hashFiles('project/Cargo.lock') }}
           restore-keys: |
             cargo-target-
@@ -53,7 +53,7 @@ jobs:
       - name: Ensure cache directories exist
         run: |
           mkdir -p /home/builder/.termux-build
-          mkdir -p /home/builder/.termux-build/termux-sample/build/target
+          mkdir -p /github/home/.termux-build/termux-sample/cargo-target
 
       - name: Fix NDK path (container HOME mismatch)
         run: |

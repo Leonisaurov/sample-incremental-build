@@ -8,6 +8,7 @@ TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
 
 export CARGO_INCREMENTAL=1
+export CARGO_TARGET_DIR="${TERMUX_TOPDIR}/${TERMUX_PKG_NAME}/cargo-target"
 
 termux_step_get_source() {
     mkdir -p "$TERMUX_PKG_SRCDIR"
