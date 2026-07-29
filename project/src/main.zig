@@ -6,7 +6,7 @@ pub fn main() !void {
     std.debug.print("Target:  {s}\n", .{@tagName(@import("builtin").target.cpu.arch)});
     std.debug.print("OS:      {s}\n", .{@tagName(@import("builtin").target.os.tag)});
 
-    if (std.os.getenv("PREFIX")) |prefix| {
-        std.debug.print("PREFIX:  {s}\n", .{prefix});
+    if (std.c.getenv("PREFIX")) |prefix| {
+        std.debug.print("PREFIX:  {s}\n", .{std.mem.span(prefix)});
     }
 }
