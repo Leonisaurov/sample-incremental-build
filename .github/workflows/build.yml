@@ -62,14 +62,16 @@ jobs:
           restore-keys: |
             cargo-target-
 
-      # Cache #2b: C ccache (cuando es C)
+      # Cache #2b: C ccache (key basada en config, NO en .c)
       - name: Restore ccache
         if: steps.detect.outputs.type == 'c'
         id: cache-ccache
         uses: actions/cache@v4
         with:
           path: /github/home/.termux-build/termux-sample/ccache
-          key: ccache-${{ hashFiles('project/**/*.c', 'project/**/*.h', 'project/Makefile') }}
+          # Key basada en configuración, no en código fuente
+          # Así make detecta naturalmente qué .c cambió
+          key: ccache-${{ hashFiles('project/Makefile', 'project/**/GNUmakefile', 'project/**/*.h', 'packages/termux-sample/build.sh', 'project/.termux-build-config') }}
           restore-keys: |
             ccache-
 
