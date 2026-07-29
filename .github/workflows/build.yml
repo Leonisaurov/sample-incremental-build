@@ -1,5 +1,6 @@
 name: Build termux-sample
 
+# Optimización #3: Trigger preciso (solo cambios relevantes)
 on:
   push:
     paths:
@@ -20,64 +21,48 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Volvemos a container: que es más rápido que docker save/load
+    container:
+      image: ghcr.io/termux/package-builder
+      options: --privileged
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ─── Optimización #1: Caché de imagen Docker ───
-      - name: Cache Docker image
-        id: docker-cache
-        uses: actions/cache@v4
-        with:
-          path: /tmp/docker-image.tar
-          key: docker-package-builder-v1
-
-      - name: Load or pull Docker image
-        run: |
-          if [ -f /tmp/docker-image.tar ]; then
-            echo "✅ Loading cached Docker image..."
-            docker load -i /tmp/docker-image.tar
-          else
-            echo "📥 Pulling Docker image (first time)..."
-            docker pull ghcr.io/termux/package-builder
-            echo "💾 Saving Docker image to cache..."
-            docker save ghcr.io/termux/package-builder -o /tmp/docker-image.tar
-          fi
-
-      # ─── Optimización #2: Cache key preciso ───
-      # Usamos una ruta en el workspace del host (escribible)
-      # que luego montamos dentro del contenedor
+      # Optimización #2: Cache key preciso (solo project/ y build.sh)
       - name: Restore build cache (incremental)
         id: cache
         uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/.termux-build-cache
+          path: /home/builder/.termux-build
           key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
           restore-keys: |
             termux-build-
 
       - name: Ensure cache directory exists
-        run: mkdir -p ${{ github.workspace }}/.termux-build-cache
+        run: mkdir -p /home/builder/.termux-build
+
+      - name: Fix NDK path (container HOME mismatch)
+        run: |
+          if [ -d /home/builder/lib/android-ndk-r29 ]; then
+            mkdir -p /github/home/lib
+            ln -sf /home/builder/lib/android-ndk-r29 /github/home/lib/android-ndk-r29
+            echo "✅ NDK symlinked"
+          else
+            echo "⚠️ NDK not found, searching..."
+            find / -name "android-ndk-*" -maxdepth 5 -type d 2>/dev/null | head -3
+          fi
 
       - name: Build package for aarch64
         run: |
-          docker run --rm --privileged \
-            -v ${{ github.workspace }}:/home/builder/proot-termux \
-            -v ${{ github.workspace }}/.termux-build-cache:/home/builder/.termux-build \
-            -e HOME=/home/builder \
-            ghcr.io/termux/package-builder \
-            bash -c "
-              cd /home/builder/proot-termux && \
-              ./build-package.sh -I -a aarch64 termux-sample
-            "
+          ./build-package.sh -I -a aarch64 termux-sample
 
       - name: Collect artifact (.deb)
         if: always()
         run: |
           mkdir -p ./artifacts
-          find ${{ github.workspace }}/.termux-build-cache -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || echo "No .deb found"
-          ls -la ./artifacts/ 2>/dev/null || echo "No artifacts"
+          find /home/builder/.termux-build -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || echo "No .deb found"
 
       - name: Upload .deb artifact
         if: always()
@@ -98,16 +83,12 @@ jobs:
           | Commit | ${{ github.sha }} |
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
-          | Docker cache | ✅ (save/load) |
           | Cache key | `termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}` |
           | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
+          | Trigger | Solo project/ y build.sh |
 
           ## 📁 Cambios que activaron el build
           ```
           ${{ github.event.before }} → ${{ github.sha }}
           ```
-
-          ## 📦 Package: termux-sample
-          - Source: `project/` (trackeado local)
-          - Build: `build-package.sh -I -a aarch64`
           SUMMARY
