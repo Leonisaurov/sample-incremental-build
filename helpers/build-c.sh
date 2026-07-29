@@ -13,7 +13,7 @@ TERMUX_PKG_BUILD_IN_SRC=true
 
 termux_step_get_source() {
     mkdir -p "$TERMUX_PKG_SRCDIR"
-    rsync -a --delete --exclude='*.o' --exclude='*.d' --exclude='*.res' \
+    rsync -a --checksum --delete --exclude='*.o' --exclude='*.d' --exclude='*.res' \
         --exclude='proot' --exclude='loader/loader' --exclude='loader-m32' \
         "$TERMUX_PKGS__BUILD__REPO_ROOT_DIR/project/" "$TERMUX_PKG_SRCDIR/"
 }
