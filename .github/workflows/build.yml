@@ -30,18 +30,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Optimización #2: Cache key preciso (solo project/ y build.sh)
-      - name: Restore build cache (incremental)
-        id: cache
+      # Cache #1: Toolchain + build system (key basada en build system)
+      - name: Restore toolchain cache
+        id: cache-toolchain
         uses: actions/cache@v4
         with:
           path: /home/builder/.termux-build
-          key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
+          key: termux-toolchain-${{ hashFiles('packages/termux-sample/build.sh', 'packages/rust/build.sh') }}
           restore-keys: |
-            termux-build-
+            termux-toolchain-
 
-      - name: Ensure cache directory exists
-        run: mkdir -p /home/builder/.termux-build
+      # Cache #2: Cargo target/ (key basada en Cargo.lock — incremental REAL)
+      - name: Restore cargo target cache (incremental)
+        id: cache-cargo
+        uses: actions/cache@v4
+        with:
+          path: /home/builder/.termux-build/termux-sample/build/target
+          key: cargo-target-${{ hashFiles('project/Cargo.lock') }}
+          restore-keys: |
+            cargo-target-
+
+      - name: Ensure cache directories exist
+        run: |
+          mkdir -p /home/builder/.termux-build
+          mkdir -p /home/builder/.termux-build/termux-sample/build/target
 
       - name: Fix NDK path (container HOME mismatch)
         run: |
@@ -83,8 +95,8 @@ jobs:
           | Commit | ${{ github.sha }} |
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
-          | Cache key | `termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}` |
-          | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
+          | Cache toolchain | ${{ steps.cache-toolchain.outputs.cache-hit }} |
+          | Cache cargo (incremental) | ${{ steps.cache-cargo.outputs.cache-hit }} |
           | Trigger | Solo project/ y build.sh |
 
           ## 📁 Cambios que activaron el build
