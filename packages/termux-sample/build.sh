@@ -55,7 +55,7 @@ TERMUX_PKG_SHA256=
 # cuando el usuario instala el paquete con `pkg install`).
 # libandroid-support proporciona funciones de libc compatibles
 # con Android (útil para ciertas funciones de stdlib).
-TERMUX_PKG_DEPENDS=""
+# TERMUX_PKG_DEPENDS=""   # Sin dependencias
 
 # Dependencias en tiempo de compilación (solo necesarias para compilar,
 # no para ejecutar). Comentar si no se necesitan.
