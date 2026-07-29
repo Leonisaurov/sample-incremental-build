@@ -1,0 +1,45 @@
+# =============================================================================
+# patches/example.patch — Demonstration patch file
+# =============================================================================
+#
+# This is a SAMPLE patch that shows how to modify hardcoded paths in upstream
+# source code so they work correctly inside the Termux environment.
+#
+# Patch format (unified diff):
+#   --- <original-file>    <timestamp>
+#   +++ <modified-file>    <timestamp>
+#   @@ -<start>,<count> +<start>,<count> @@
+#   -<original line>
+#   +<modified line>
+#
+# The termux-pkg-builder applies all *.patch files from the patches/
+# directory automatically after extracting the source tarball.
+#
+# How to create a real patch:
+#   1. Extract the original source
+#   2. Copy the file you want to modify (e.g., cp main.c main.c.orig)
+#   3. Edit main.c with your changes
+#   4. Run: diff -u main.c.orig main.c > example.patch
+#
+# -----------------------------------------------------------------------------
+# Example: Replace a hardcoded /usr/local path with Termux's $PREFIX
+#
+# Imagine the upstream source has:
+#   #define DEFAULT_PATH "/usr/local/share/myapp"
+#
+# We patch it to use Termux's PREFIX:
+#   #define DEFAULT_PATH "@TERMUX_PREFIX@/share/myapp"
+#
+# (termux-pkg-builder replaces @TERMUX_PREFIX@ at build time)
+# -----------------------------------------------------------------------------
+
+--- a/src/config.h
++++ b/src/config.h
+@@ -1,6 +1,6 @@
+ #ifndef CONFIG_H
+ #define CONFIG_H
+
+-#define DEFAULT_DATA_DIR "/usr/local/share/myapp"
++#define DEFAULT_DATA_DIR "@TERMUX_PREFIX@/share/myapp"
+
+ #endif /* CONFIG_H */
