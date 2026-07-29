@@ -1,6 +1,5 @@
 # Configuración para proot (proyecto C)
-PKG_DEPENDS="libtalloc"
 BUILD_SYSTEM="make"
 EXTRA_MAKE_ARGS="-C src"
 CPPFLAGS_EXTRA="-DARG_MAX=131072"
-EXTRA_ENV="PROOT_UNBUNDLE_LOADER=\$PREFIX/libexec/proot"
+EXTRA_ENV="PROOT_UNBUNDLE_LOADER=${PREFIX}/libexec/proot"

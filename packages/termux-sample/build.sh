@@ -9,6 +9,7 @@ TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_VERSION="1.0.0"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
+TERMUX_PKG_DEPENDS="libtalloc"
 
 # Cargar configuración del proyecto
 source "$TERMUX_PKGS__BUILD__REPO_ROOT_DIR/helpers/termux-build-config.sh"
