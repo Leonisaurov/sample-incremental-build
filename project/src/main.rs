@@ -7,4 +7,5 @@ fn main() {
     if let Ok(h) = std::env::var("HOME") {
         println!("HOME: {}", h);
     }
+    // incremental build test - 2026-07-29
 }
