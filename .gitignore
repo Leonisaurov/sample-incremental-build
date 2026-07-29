@@ -42,3 +42,4 @@ ndk-patches/*.orig
 
 # Python bytecode cache
 __pycache__/
+err.log

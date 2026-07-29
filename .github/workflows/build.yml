@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'project/**'
-      - 'packages/termux-sample/build.sh'
+      - 'packages/**'
       - '.github/workflows/build.yml'
     branches:
       - '**'
@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/builder/.termux-build
-          key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
+          key: termux-build-${{ hashFiles('project/**', 'packages/**') }}
           restore-keys: |
             termux-build-
 
