@@ -69,8 +69,6 @@ jobs:
             ghcr.io/termux/package-builder \
             bash -c "
               cd /home/builder/proot-termux && \
-              mkdir -p /github/home/lib && \
-              ln -sf /home/builder/lib/android-ndk-r29 /github/home/lib/android-ndk-r29 2>/dev/null; \
               ./build-package.sh -I -a aarch64 termux-sample
             "
 
