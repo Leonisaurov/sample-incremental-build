@@ -23,6 +23,8 @@ termux_step_get_source() {
 }
 
 termux_step_pre_configure() {
+    # Fijar versión de Zig (evita source de packages/zig/build.sh)
+    export TERMUX_ZIG_VERSION=${TERMUX_ZIG_VERSION:-0.16.0}
     # Setup Zig toolchain (descarga binario ziglang.org si es necesario)
     termux_setup_zig
     mkdir -p "$ZIG_GLOBAL_CACHE_DIR" "$ZIG_LOCAL_CACHE_DIR"
