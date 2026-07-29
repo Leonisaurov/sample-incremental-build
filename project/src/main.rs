@@ -543,3 +543,5 @@ fn main() {
 }
 
 // incremental test pass
+
+// incremental compilation works!
