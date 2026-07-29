@@ -36,3 +36,9 @@ Thumbs.db
 # --- Build artifacts ---------------------------------------------------------
 # The compiled binary (when building locally without DESTDIR)
 src/termux-sample
+
+# ndk patches backup
+ndk-patches/*.orig
+
+# Python bytecode cache
+__pycache__/

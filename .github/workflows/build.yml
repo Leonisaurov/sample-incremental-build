@@ -4,12 +4,11 @@ on:
   push:
     paths:
       - 'project/**'
-      - 'build.sh'
+      - 'packages/termux-sample/build.sh'
       - '.github/workflows/build.yml'
     branches:
       - '**'
   workflow_dispatch:
-    # Permite trigger manual también
 
 permissions:
   contents: read
@@ -33,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/builder/.termux-build
-          key: termux-build-${{ hashFiles('project/**', 'build.sh') }}
+          key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
           restore-keys: |
             termux-build-
 
@@ -46,14 +45,12 @@ jobs:
         env:
           TERMUX_DOCKER_RUN_EXTRA_ARGS: --volume /home/builder/.termux-build:/home/builder/.termux-build
 
-      - name: Collect artifact
+      - name: Collect artifact (.deb)
         if: always()
         run: |
           mkdir -p ./artifacts
-          cp /home/builder/.termux-build/termux-sample/*.deb ./artifacts/ 2>/dev/null || \
-            find /home/builder/.termux-build -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || \
-            echo "No .deb found - checking build output..."
-          ls -la ./artifacts/ 2>/dev/null || echo "No artifacts directory"
+          find /home/builder/.termux-build -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || echo "No .deb found"
+          ls -la ./artifacts/ 2>/dev/null || echo "No artifacts"
 
       - name: Upload .deb artifact
         if: always()
@@ -74,11 +71,15 @@ jobs:
           | Commit | ${{ github.sha }} |
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
-          | Cache key | `termux-build-${{ hashFiles('project/**', 'build.sh') }}` |
+          | Cache key | `termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}` |
           | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
 
-          ## 📁 Archivos en project/ que dispararon el build
+          ## 📁 Cambios en project/ que activaron el build
           ```
           ${{ github.event.before }} → ${{ github.sha }}
           ```
+
+          ## 📦 Package: termux-sample
+          - Source: `project/` (trackeado local)
+          - Build: `build-package.sh -I -a aarch64`
           SUMMARY
