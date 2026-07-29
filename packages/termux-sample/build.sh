@@ -34,10 +34,19 @@ termux_step_pre_configure() {
         echo "==> Setting up C incremental build"
         # ccache for C compilation caching
         if command -v ccache &>/dev/null; then
+            echo "  ccache found"
+        else
+            echo "  Installing ccache..."
+            sudo apt-get update -qq 2>/dev/null
+            sudo apt-get install -y -qq ccache 2>/dev/null && echo "  ccache installed" || echo "  ccache install failed"
+        fi
+
+        if command -v ccache &>/dev/null; then
             export CCACHE_DIR="${TERMUX_TOPDIR}/${TERMUX_PKG_NAME}/ccache"
             export CCACHE_COMPRESS=1
             export CCACHE_COMPRESSLEVEL=6
             export CCACHE_MAXSIZE=500M
+            # Use ccache as compiler wrapper
             export PATH="/usr/lib/ccache:$PATH"
             echo "  ccache enabled: $CCACHE_DIR"
         else

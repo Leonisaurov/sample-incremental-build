@@ -46,7 +46,7 @@ jobs:
         id: cache-toolchain
         uses: actions/cache@v4
         with:
-          path: /home/builder/.termux-build
+          path: /github/home/.termux-build
           key: termux-toolchain-${{ hashFiles('packages/termux-sample/build.sh', 'packages/rust/build.sh') }}
           restore-keys: |
             termux-toolchain-
@@ -75,7 +75,7 @@ jobs:
 
       - name: Ensure cache directories exist
         run: |
-          mkdir -p /home/builder/.termux-build
+          mkdir -p /github/home/.termux-build
           case "${{ steps.detect.outputs.type }}" in
             rust) mkdir -p /github/home/.termux-build/termux-sample/cargo-target ;;
             c)    mkdir -p /github/home/.termux-build/termux-sample/ccache ;;
