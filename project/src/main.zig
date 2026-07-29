@@ -5,8 +5,4 @@ pub fn main() !void {
     std.debug.print("Version: {s}\n", .{@import("builtin").zig_version_string});
     std.debug.print("Target:  {s}\n", .{@tagName(@import("builtin").target.cpu.arch)});
     std.debug.print("OS:      {s}\n", .{@tagName(@import("builtin").target.os.tag)});
-
-    if (std.process.getenv("PREFIX")) |prefix| {
-        std.debug.print("PREFIX:  {s}\n", .{prefix});
-    }
 }
