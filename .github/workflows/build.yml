@@ -33,7 +33,10 @@ jobs:
       - name: Detect project type
         id: detect
         run: |
-          if [ -f project/Cargo.toml ]; then
+          if [ -f project/build.zig ] || [ -f project/build.zig.zon ]; then
+            echo "type=zig" >> $GITHUB_OUTPUT
+            echo "Project type: Zig"
+          elif [ -f project/Cargo.toml ]; then
             echo "type=rust" >> $GITHUB_OUTPUT
             echo "Project type: Rust"
           else
@@ -75,12 +78,24 @@ jobs:
           restore-keys: |
             ccache-
 
+      # Cache #2c: Zig global cache (key basada en build.zig)
+      - name: Restore zig cache
+        if: steps.detect.outputs.type == 'zig'
+        id: cache-zig
+        uses: actions/cache@v4
+        with:
+          path: /github/home/.termux-build/termux-sample/zig-cache
+          key: zig-cache-${{ hashFiles('project/build.zig', 'project/build.zig.zon', 'project/src/**/*.zig') }}
+          restore-keys: |
+            zig-cache-
+
       - name: Ensure cache directories exist
         run: |
           mkdir -p /github/home/.termux-build
           case "${{ steps.detect.outputs.type }}" in
             rust) mkdir -p /github/home/.termux-build/termux-sample/cargo-target ;;
             c)    mkdir -p /github/home/.termux-build/termux-sample/ccache ;;
+            zig)  mkdir -p /github/home/.termux-build/termux-sample/zig-cache ;;
           esac
 
       - name: Fix NDK path (container HOME mismatch)
