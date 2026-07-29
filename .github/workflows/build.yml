@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'project/**'
-      - 'packages/**'
+      - 'packages/termux-sample/build.sh'
       - '.github/workflows/build.yml'
     branches:
       - '**'
@@ -20,20 +20,38 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/termux/package-builder
-      options: --privileged
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ─── Optimización #1: Caché de imagen Docker ───
+      - name: Cache Docker image
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker-image.tar
+          key: docker-package-builder-v1
+
+      - name: Load or pull Docker image
+        run: |
+          if [ -f /tmp/docker-image.tar ]; then
+            echo "✅ Loading cached Docker image..."
+            docker load -i /tmp/docker-image.tar
+          else
+            echo "📥 Pulling Docker image (first time)..."
+            docker pull ghcr.io/termux/package-builder
+            echo "💾 Saving Docker image to cache..."
+            docker save ghcr.io/termux/package-builder -o /tmp/docker-image.tar
+          fi
+
+      # ─── Optimización #2: Cache key preciso ───
       - name: Restore build cache (incremental)
         id: cache
         uses: actions/cache@v4
         with:
           path: /home/builder/.termux-build
-          key: termux-build-${{ hashFiles('project/**', 'packages/**') }}
+          key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
           restore-keys: |
             termux-build-
 
@@ -57,15 +75,22 @@ jobs:
           else
             echo "⚠️ NDK not found at expected paths. Searching..."
             find / -name "android-ndk-*" -maxdepth 5 -type d 2>/dev/null | head -5
-            find /home/builder -name "ndk-*" -maxdepth 3 2>/dev/null | head -5
             ls -la /home/builder/lib/ 2>/dev/null || echo "No /home/builder/lib/"
           fi
 
       - name: Build package for aarch64
         run: |
-          ./build-package.sh -I -a aarch64 termux-sample
-        env:
-          TERMUX_DOCKER_RUN_EXTRA_ARGS: --volume /home/builder/.termux-build:/home/builder/.termux-build
+          docker run --rm --privileged \
+            -v $PWD:/home/builder/proot-termux \
+            -v /home/builder/.termux-build:/home/builder/.termux-build \
+            -e HOME=/home/builder \
+            ghcr.io/termux/package-builder \
+            bash -c "
+              cd /home/builder/proot-termux && \
+              mkdir -p /github/home/lib && \
+              ln -sf /home/builder/lib/android-ndk-r29 /github/home/lib/android-ndk-r29 2>/dev/null; \
+              ./build-package.sh -I -a aarch64 termux-sample
+            "
 
       - name: Collect artifact (.deb)
         if: always()
@@ -93,10 +118,11 @@ jobs:
           | Commit | ${{ github.sha }} |
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
+          | Optimizaciones | #1 Docker cache ✅ #2 Cache key preciso ✅ #3 Trigger preciso ✅ |
           | Cache key | `termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}` |
           | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
 
-          ## 📁 Cambios en project/ que activaron el build
+          ## 📁 Cambios que activaron el build
           ```
           ${{ github.event.before }} → ${{ github.sha }}
           ```
