@@ -1,0 +1,20 @@
+#!/bin/bash
+ubuntu() {
+    echo "Ubuntu like:"
+    echo -e "\tsudo apt install 7z"
+}
+
+arch() {
+    echo "Archlinux like:"
+    echo -e "\tsudo pacman -S 7z"
+}
+
+if which 7z &> /dev/null; then
+    cargo run $@
+else
+    echo "The 7z command need to be installed."
+    echo "Install it with your package manager:"
+    ubuntu
+    arch
+    echo "Or what you have"
+fi

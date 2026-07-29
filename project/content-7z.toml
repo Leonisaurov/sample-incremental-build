@@ -1,0 +1,53 @@
+#| Catppuccine
+# background-color = [30, 30, 46]
+# text-color = [205, 214, 244]
+# border-color = [69, 71, 90]
+
+# folder-bullet-color = "1;38;2;137;180;250"
+# file-bullet-color = "38;2;180;190;254;1"
+
+#| Tokio Dark
+# background-color = [17, 18, 29]
+# text-color = [160, 168, 205]
+# border-color = [26, 27, 42]
+
+# folder-bullet-color = "1;38;2;113;153;238"
+# file-bullet-color = "38;2;238;109;133;1"
+
+#| Rose pine
+# text-color = [224, 222, 244]
+# background-color = [25, 23, 36]
+# border-color = [110, 106, 134]
+
+#- Pine moded
+# folder-bullet-color = "1;38;2;64;131;158"
+#- Pine
+# folder-bullet-color = "1;38;2;49;116;143"
+#- Foam
+# folder-bullet-color = "1;38;2;156;207;216"
+# file-bullet-color = "38;2;196;167;216;1"
+
+#| Dracula
+# text-color = [248, 248, 242]
+# background-color = [40, 42, 54]
+# border-color = [98, 114, 164]
+
+# folder-bullet-color = "1;38;2;139;233;253"
+# file-bullet-color = "38;2;255;121;198;1"
+
+#| Lunaperche
+# text-color = [198, 198, 198]
+# background-color = []
+# border-color = [88, 88, 88]
+
+# folder-bullet-color = "1;38;2;95;175;255"
+# file-bullet-color = "38;2;255;135;255;1"
+
+#| Fancy icons
+# folder-bullet = " \ue5fe "
+# file-bullet = " \uea7b "
+
+multi-choice-helper = "\ny(es) / (no)\n"
+
+editor = ""
+always-overwrite=false

@@ -1,9 +1,9 @@
-# Rust project maintained in project/
-TERMUX_PKG_HOMEPAGE=https://github.com/user/termux-sample
-TERMUX_PKG_DESCRIPTION="Sample Rust project (incremental build test)"
+# Rust project maintained in project/ (content-7z — TUI 7z content viewer)
+TERMUX_PKG_HOMEPAGE=https://github.com/Leonisaurov/content-7z
+TERMUX_PKG_DESCRIPTION="TUI tool to visualize and navigate 7z archive contents (incremental build test)"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@termux-user"
-TERMUX_PKG_VERSION="1.0.0"
+TERMUX_PKG_VERSION="0.1.0"
 TERMUX_PKG_SKIP_SRC_EXTRACT=true
 TERMUX_PKG_BUILD_IN_SRC=true
 
