@@ -43,3 +43,16 @@ ndk-patches/*.orig
 # Python bytecode cache
 __pycache__/
 err.log
+
+# proot build artifacts
+project/src/*.o
+project/src/*.d
+project/src/*.res
+project/src/*.tmp
+project/src/build.h
+project/src/proot
+project/src/cmd
+project/src/loader/loader
+project/src/loader/*.o
+project/src/loader/*.d
+project/src/licenses
