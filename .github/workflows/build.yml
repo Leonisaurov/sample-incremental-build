@@ -46,43 +46,25 @@ jobs:
           fi
 
       # ─── Optimización #2: Cache key preciso ───
+      # Usamos una ruta en el workspace del host (escribible)
+      # que luego montamos dentro del contenedor
       - name: Restore build cache (incremental)
         id: cache
         uses: actions/cache@v4
         with:
-          path: /home/builder/.termux-build
+          path: ${{ github.workspace }}/.termux-build-cache
           key: termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}
           restore-keys: |
             termux-build-
 
       - name: Ensure cache directory exists
-        run: mkdir -p /home/builder/.termux-build
-
-      - name: Fix NDK path (container HOME mismatch)
-        run: |
-          echo "Home is: $HOME"
-          echo "Looking for NDK at expected paths..."
-          if [ -d /home/builder/lib/android-ndk-r29 ]; then
-            echo "Found NDK at /home/builder/lib/android-ndk-r29"
-            mkdir -p /github/home/lib
-            ln -sf /home/builder/lib/android-ndk-r29 /github/home/lib/android-ndk-r29
-            echo "✅ NDK symlinked to /github/home/lib/android-ndk-r29"
-          elif [ -d /home/builder/lib/android-ndk-r28 ]; then
-            echo "Found NDK at /home/builder/lib/android-ndk-r28"
-            mkdir -p /github/home/lib
-            ln -sf /home/builder/lib/android-ndk-r28 /github/home/lib/android-ndk-r28
-            echo "✅ NDK symlinked to /github/home/lib/android-ndk-r28"
-          else
-            echo "⚠️ NDK not found at expected paths. Searching..."
-            find / -name "android-ndk-*" -maxdepth 5 -type d 2>/dev/null | head -5
-            ls -la /home/builder/lib/ 2>/dev/null || echo "No /home/builder/lib/"
-          fi
+        run: mkdir -p ${{ github.workspace }}/.termux-build-cache
 
       - name: Build package for aarch64
         run: |
           docker run --rm --privileged \
-            -v $PWD:/home/builder/proot-termux \
-            -v /home/builder/.termux-build:/home/builder/.termux-build \
+            -v ${{ github.workspace }}:/home/builder/proot-termux \
+            -v ${{ github.workspace }}/.termux-build-cache:/home/builder/.termux-build \
             -e HOME=/home/builder \
             ghcr.io/termux/package-builder \
             bash -c "
@@ -96,7 +78,7 @@ jobs:
         if: always()
         run: |
           mkdir -p ./artifacts
-          find /home/builder/.termux-build -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || echo "No .deb found"
+          find ${{ github.workspace }}/.termux-build-cache -name "*.deb" -exec cp {} ./artifacts/ \; 2>/dev/null || echo "No .deb found"
           ls -la ./artifacts/ 2>/dev/null || echo "No artifacts"
 
       - name: Upload .deb artifact
@@ -118,7 +100,7 @@ jobs:
           | Commit | ${{ github.sha }} |
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
-          | Optimizaciones | #1 Docker cache ✅ #2 Cache key preciso ✅ #3 Trigger preciso ✅ |
+          | Docker cache | ✅ (save/load) |
           | Cache key | `termux-build-${{ hashFiles('project/**', 'packages/termux-sample/build.sh') }}` |
           | Cache hit | ${{ steps.cache.outputs.cache-hit }} |
 
