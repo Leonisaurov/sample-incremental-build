@@ -30,6 +30,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect project type
+        id: detect
+        run: |
+          if [ -f project/Cargo.toml ]; then
+            echo "type=rust" >> $GITHUB_OUTPUT
+            echo "Project type: Rust"
+          else
+            echo "type=c" >> $GITHUB_OUTPUT
+            echo "Project type: C"
+          fi
+
       # Cache #1: Toolchain + build system (key basada en build system)
       - name: Restore toolchain cache
         id: cache-toolchain
@@ -40,8 +51,9 @@ jobs:
           restore-keys: |
             termux-toolchain-
 
-      # Cache #2: Cargo target/ (key basada en Cargo.lock — incremental REAL)
-      - name: Restore cargo target cache (incremental)
+      # Cache #2a: Rust cargo target/ (cuando es Rust)
+      - name: Restore cargo target cache
+        if: steps.detect.outputs.type == 'rust'
         id: cache-cargo
         uses: actions/cache@v4
         with:
@@ -50,10 +62,24 @@ jobs:
           restore-keys: |
             cargo-target-
 
+      # Cache #2b: C ccache (cuando es C)
+      - name: Restore ccache
+        if: steps.detect.outputs.type == 'c'
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          path: /github/home/.termux-build/termux-sample/ccache
+          key: ccache-${{ hashFiles('project/**/*.c', 'project/**/*.h', 'project/Makefile') }}
+          restore-keys: |
+            ccache-
+
       - name: Ensure cache directories exist
         run: |
           mkdir -p /home/builder/.termux-build
-          mkdir -p /github/home/.termux-build/termux-sample/cargo-target
+          case "${{ steps.detect.outputs.type }}" in
+            rust) mkdir -p /github/home/.termux-build/termux-sample/cargo-target ;;
+            c)    mkdir -p /github/home/.termux-build/termux-sample/ccache ;;
+          esac
 
       - name: Fix NDK path (container HOME mismatch)
         run: |
@@ -96,7 +122,7 @@ jobs:
           | Branch | ${{ github.ref_name }} |
           | Arquitectura | aarch64 |
           | Cache toolchain | ${{ steps.cache-toolchain.outputs.cache-hit }} |
-          | Cache cargo (incremental) | ${{ steps.cache-cargo.outputs.cache-hit }} |
+          | Cache target | ${{ steps.detect.outputs.type == 'rust' && steps.cache-cargo.outputs.cache-hit || steps.cache-ccache.outputs.cache-hit }} |
           | Trigger | Solo project/ y build.sh |
 
           ## 📁 Cambios que activaron el build
